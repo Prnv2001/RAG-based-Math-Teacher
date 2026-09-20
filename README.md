@@ -1,12 +1,12 @@
 # RAG-Based AI Mathematics Teacher (CBSE Class 9 & Class 10)
 
-An intelligent, interactive, RAG-powered Mathematics Teacher web application and API engineered for CBSE Class 9 and Class 10 students. Powered by **FastAPI**, **LangGraph**, **PostgreSQL + pgvector**, **Groq LLM**, **Ollama Embeddings**, **SymPy Symbolic Verification**, and a **Deterministic SVG Geometry Engine**.
+An intelligent, interactive, RAG-powered Mathematics Teacher web application and API engineered for CBSE Class 9 and Class 10 students. Powered by **FastAPI**, **LangGraph**, **PostgreSQL + pgvector**, **Groq LLM**, **Sentence-Transformers Embeddings**, **SymPy Symbolic Verification**, and a **Deterministic SVG Geometry Engine**.
 
 ---
 
 ## 🌟 Key Capabilities
 
-- 📚 **Hybrid Retrieval (Vector + Full-Text Search)**: Searches NCERT Class 9 & 10 textbook chunks using HNSW cosine similarity on `nomic-embed-text` embeddings combined with PostgreSQL keyword search, fused via **Reciprocal Rank Fusion (RRF)**.
+- 📚 **Hybrid Retrieval (Vector + Full-Text Search)**: Searches NCERT Class 9 & 10 textbook chunks using HNSW cosine similarity on `sentence-transformers/all-mpnet-base-v2` embeddings combined with PostgreSQL keyword search, fused via **Reciprocal Rank Fusion (RRF)**.
 - 📐 **Deterministic NCERT Geometry SVG Engine**: Dynamically generates 100% geometrically accurate inline vector diagrams for Triangles, Circles (Class 9 Chords, Cyclic Quadrilaterals, Class 10 Tangents), Right Triangles (90° corner boxes), and Cone/3D shapes with anti-overlap label positioning.
 - 🧮 **SymPy Symbolic Math Verifier**: Algebraically verifies proposed polynomial roots and equation solutions before outputting results to guarantee mathematical correctness.
 - 🔄 **Context-Aware Query Expansion**: Automatically resolves follow-up action chips (`Show the full worked solution`, `Need a Hint`, `Option A: 4x² - 3x + 1`) by merging with prior chat context to maintain RAG grounding.
@@ -22,7 +22,7 @@ An intelligent, interactive, RAG-powered Mathematics Teacher web application and
 | :--- | :--- |
 | **Backend Framework** | Python 3.10+, FastAPI, Uvicorn, LangGraph |
 | **Vector Database** | PostgreSQL 15+ with `pgvector` HNSW index |
-| **Embeddings** | Ollama (`nomic-embed-text`, 768 dimensions) |
+| **Embeddings** | Sentence-Transformers (`all-mpnet-base-v2`, 768 dimensions) |
 | **LLM Inference** | Groq Cloud API (`openai/gpt-oss-20b` / `llama-3.3-70b-versatile`) |
 | **Symbolic Verification** | SymPy (Deterministic equation & root verification) |
 | **Diagram Engine** | Custom SVG Vector Engine (`svg_engine.py`) |
