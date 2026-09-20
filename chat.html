@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Maths Teacher — Dev Chat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      background: #f5f5f5;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e0e0e0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar h2 { font-size: 13px; font-weight: 600; color: #333; }
+    label { font-size: 12px; color: #555; display: block; margin-bottom: 3px; }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      background: #fafafa;
+    }
+    .mode-btns { display: flex; flex-direction: column; gap: 4px; }
+    .mode-btn {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fafafa;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .mode-btn.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .status {
+      margin-top: auto;
+      font-size: 11px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+    .dot.ok   { background: #34a853; }
+    .dot.warn { background: #fbbc04; }
+    .dot.fail { background: #ea4335; }
+
+    /* Chat */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg { max-width: 75%; line-height: 1.55; }
+    .msg.user { align-self: flex-end; }
+    .msg.ai   { align-self: flex-start; }
+    .msg-bubble {
+      padding: 9px 13px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user .msg-bubble { background: #1a73e8; color: #fff; }
+    .msg-meta { font-size: 11px; color: #999; margin-top: 4px; }
+    .quick-chips { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      padding: 4px 10px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .mcq-option-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      text-align: left;
+      padding: 7px 12px;
+      margin: 4px 0;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #0f172a;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .mcq-option-btn:hover {
+      background: #f3e8ff;
+      border-color: #9333ea;
+      color: #581c87;
+      transform: translateY(-1px);
+    }
+    .mcq-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: #f3e8ff;
+      border: 1px solid #c084fc;
+      color: #7e22ce;
+      border-radius: 50%;
+      font-weight: 700;
+      margin-right: 10px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    /* Thinking dots */
+    .thinking { display: flex; gap: 4px; align-items: center; padding: 10px 13px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; width: fit-content; }
+    .thinking span { width: 6px; height: 6px; border-radius: 50%; background: #aaa; animation: blink 1.2s infinite; }
+    .thinking span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+
+    /* Input */
+    .input-row {
+      padding: 12px 16px;
+      border-top: 1px solid #e0e0e0;
+      background: #fff;
+      display: flex;
+      gap: 8px;
+    }
+    textarea {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      min-height: 38px;
+      max-height: 120px;
+    }
+    textarea:focus { outline: none; border-color: #1a73e8; }
+    button.send {
+      padding: 0 16px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.send:disabled { background: #ccc; cursor: not-allowed; }
+
+    .empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Context</h2>
+
+  <div>
+    <label>Class</label>
+    <select id="cls">
+      <option value="">Any</option>
+      <option value="9" selected>9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Chapter</label>
+    <input id="chapter" type="text" placeholder="optional" />
+  </div>
+
+  <div>
+    <label>Topic</label>
+    <input id="topic" type="text" placeholder="optional" />
+  </div>
+
+  <div>
+    <label>Mode</label>
+    <div class="mode-btns">
+      <button class="mode-btn active" data-mode="INTERACTIVE" onclick="setMode(this)">🎓 Interactive Teacher</button>
+      <button class="mode-btn" data-mode="GUIDED" onclick="setMode(this)">Guided</button>
+      <button class="mode-btn" data-mode="HINT" onclick="setMode(this)">Hint</button>
+      <button class="mode-btn" data-mode="FULL_SOLUTION" onclick="setMode(this)">Full Solution</button>
+    </div>
+  </div>
+
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">Checking…</span>
+  </div>
+</div>
+
+<div class="chat">
+  <div class="messages" id="messages">
+    <div class="empty" id="empty">Send a question to start learning interactively!</div>
+  </div>
+  <div class="input-row">
+    <textarea id="q" rows="1" placeholder="Ask a maths question or reply to the teacher…" onkeydown="handleKey(event)" oninput="resize(this)"></textarea>
+    <button class="send" id="send-btn" onclick="send()">Send</button>
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8000/api/v1';
+  let mode = 'INTERACTIVE';
+  let busy = false;
+  let chatHistory = [];
+
+  checkHealth();
+  setInterval(checkHealth, 30000);
+
+  async function checkHealth() {
+    const dot = document.getElementById('dot');
+    const txt = document.getElementById('status-text');
+    try {
+      const r = await fetch(API + '/health');
+      const d = await r.json();
+      dot.className = 'dot ' + (d.status === 'ok' ? 'ok' : 'warn');
+      txt.textContent = d.status === 'ok' ? 'Server OK' : `DB: ${d.database}`;
+    } catch {
+      dot.className = 'dot fail';
+      txt.textContent = 'Unreachable';
+    }
+  }
+
+  function setMode(btn) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+  }
+
+  function resize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  async function send() {
+    if (busy) return;
+    const q = document.getElementById('q').value.trim();
+    if (!q) return;
+
+    document.getElementById('empty')?.remove();
+    addMsg('user', q);
+    document.getElementById('q').value = '';
+    document.getElementById('q').style.height = 'auto';
+
+    const body = { question: q, mode, chat_history: chatHistory.slice(-6) };
+    const cls = document.getElementById('cls').value;
+    const ch  = document.getElementById('chapter').value.trim();
+    const tp  = document.getElementById('topic').value.trim();
+    if (cls) body.class_level = parseInt(cls);
+    if (ch)  body.chapter = ch;
+    if (tp)  body.topic = tp;
+
+    const tid = addThinking();
+    setBusy(true);
+
+    try {
+      const r = await fetch(API + '/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      removeThinking(tid);
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({ detail: r.statusText }));
+        addMsg('ai', '⚠ Error: ' + (e.detail || r.statusText));
+        return;
+      }
+      const d = await r.json();
+      chatHistory.push({ role: 'user', content: q });
+      chatHistory.push({ role: 'assistant', content: d.answer });
+
+      const meta = [
+        d.intent?.replace(/_/g, ' '),
+        d.grounding?.passed ? `✓ grounded ${(d.grounding.score * 100).toFixed(0)}%` : `⚠ low grounding`,
+        d.math_verification?.status !== 'not_required' ? (d.math_verification?.passed ? '✓ math ok' : '✗ math fail') : null
+      ].filter(Boolean).join(' · ');
+      addMsg('ai', d.answer, meta, d.step_logs);
+    } catch (err) {
+      removeThinking(tid);
+      addMsg('ai', '⚠ ' + (err.message === 'Failed to fetch' ? 'Cannot reach server. Is it running?' : err.message));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function formatMathText(s) {
+    if (!s) return '';
+    let str = String(s);
+    str = str.replace(/-?\\?(?:d|t)?frac\{([^}]+)\}\{([^}]+)\}/gi, '($1/$2)');
+    str = str.replace(/-?\\?(?:d|t)?frac(\d)(\d)/gi, '($1/$2)');
+    str = str.replace(/\\?(?:d|t)?frac/gi, '');
+
+    const sups = {'^0':'⁰','^1':'¹','^2':'²','^3':'³','^4':'⁴','^5':'⁵','^6':'⁶','^7':'⁷','^8':'⁸','^9':'⁹','^n':'ⁿ'};
+    for (const [k, v] of Object.entries(sups)) {
+      str = str.replaceAll(k, v);
+    }
+    str = str.replace(/\(\s*°\s*\)/g, '°');
+    str = str.replace(/\^\s*\(?\s*°\s*\)?/g, '°');
+    str = str.replace(/\\?perpendicular\b|\\?perp[\s\-]*endicular\b|⊥[\s\-]*endicular\b|perp[\s\-]*endicular\b/gi, 'perpendicular');
+    str = str.replace(/\\perp\b|\bperp\b(?!\s*endicular)/gi, ' ⊥ ');
+    str = str.replace(/\\?triangle\s+([A-Z]{1,3}\b)/gi, '△$1');
+    str = str.replace(/\\?\bangle\b\s+([A-Z]{1,3}\b)/gi, '∠$1');
+    str = str.replace(/\\cong|\bcong\b(?!\s*r?uent|\s*r?uence)/gi, ' ≅ ');
+    str = str.replace(/\\[lL]ongrightarrow|\\[rR]ightarrow|\\implies/g, ' ⇒ ');
+    str = str.replace(/\\[lL]ongleftarrow|\\[lL]eftarrow/g, ' ⇐ ');
+    str = str.replace(/\\cdot/gi, '·').replace(/\\times/gi, '×');
+    str = str.replace(/\\sqrt\{([^}]+)\}/gi, '√($1)').replace(/\\sqrt/gi, '√');
+    str = str.replace(/\\text\{([^}]+)\}/gi, '$1');
+    str = str.replace(/\\begin\{[^}]+\}|\\end\{[^}]+\}/gi, '');
+    str = str.replace(/\\[\[\]\(\)]/g, '');
+    str = str.replace(/&=(?:\s*)/g, '= ').replace(/&(?:\s*)/g, '').replace(/\\\\[^\n]*\n?/g, '\n');
+    str = str.replace(/\\[;,:\!]|\\quad|\\qquad/g, ' ');
+
+    str = str.replace(/\$\$(.*?)\$\$/gs, '$1').replace(/\$([^$\n]+)\$/g, '$1').replace(/\$/g, '');
+    str = str.replace(/\\([a-zA-Z]+)/g, '$1');
+    str = str.replace(/ {2,}/g, ' ');
+    return str.trim();
+  }
+
+  function buildHtmlTable(header, rows) {
+    let html = '<div style="overflow-x:auto; margin:10px 0;"><table style="width:100%; border-collapse:collapse; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+    if (header.length > 0) {
+      html += '<thead style="background:#f1f5f9; color:#0f172a; font-weight:600;"><tr>';
+      for (const h of header) {
+        html += `<th style="padding:8px 12px; border:1px solid #cbd5e1; text-align:left;">${esc(h)}</th>`;
+      }
+      html += '</tr></thead>';
+    }
+    html += '<tbody>';
+    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+      const bg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
+      html += `<tr style="background:${bg};">`;
+      for (const cell of rows[rIdx]) {
+        html += `<td style="padding:7px 12px; border:1px solid #e2e8f0; color:#334155;">${esc(cell)}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderFormattedText(s) {
+    if (!s) return '';
+    let str = formatMathText(s);
+
+    // Extract raw <svg>...</svg> blocks (or ```xml/svg/html code blocks containing <svg>, including unclosed) first
+    const svgBlocks = [];
+    str = str.replace(/(?:```(?:xml|svg|html)?\s*)?(<svg[\s\S]*?(?:<\/svg>|$))(?:\s*```)?/gi, (match, svgContent) => {
+      let cleanSvg = svgContent.trim();
+      if (cleanSvg && !cleanSvg.toLowerCase().includes('</svg>')) {
+        cleanSvg += '</svg>';
+      }
+      svgBlocks.push(cleanSvg);
+      return `\n___SVG_BLOCK_${svgBlocks.length - 1}___\n`;
+    });
+
+    // Extract code blocks ```...``` next to preserve text formatting
+    const codeBlocks = [];
+    str = str.replace(/```(?:[a-zA-Z]*)\n?([\s\S]*?)```/g, (match, code) => {
+      codeBlocks.push(code);
+      return `\n___CODE_BLOCK_${codeBlocks.length - 1}___\n`;
+    });
+
+    const lines = str.split('\n');
+    const outLines = [];
+    let inTable = false;
+    let tableHeader = [];
+    let tableRows = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const rawLine = lines[i];
+      const line = rawLine.trim();
+
+      if (line.startsWith('___SVG_BLOCK_') && line.endsWith('___')) {
+        if (inTable) {
+          outLines.push(buildHtmlTable(tableHeader, tableRows));
+          inTable = false;
+          tableHeader = [];
+          tableRows = [];
+        }
+        const idx = parseInt(line.replace('___SVG_BLOCK_', '').replace('___', ''));
+        const svg = svgBlocks[idx] || '';
+        outLines.push(`<div style="margin:14px 0; display:flex; justify-content:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; box-shadow:0 1px 4px rgba(0,0,0,0.06); overflow-x:auto;">${svg}</div>`);
+        continue;
+      }
+
+      if (line.startsWith('___CODE_BLOCK_') && line.endsWith('___')) {
+        if (inTable) {
+          outLines.push(buildHtmlTable(tableHeader, tableRows));
+          inTable = false;
+          tableHeader = [];
+          tableRows = [];
+        }
+        const idx = parseInt(line.replace('___CODE_BLOCK_', '').replace('___', ''));
+        const code = codeBlocks[idx] || '';
+        outLines.push(`<pre style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; font-family:Consolas, Monaco, monospace; font-size:12px; line-height:1.45; overflow-x:auto; margin:10px 0; white-space:pre;">${esc(code)}</pre>`);
+        continue;
+      }
+
+      if (line.startsWith('|') && line.endsWith('|')) {
+        if (/^\|[\s\-:]+(\|[\s\-:]+)+\|$/.test(line)) {
+          continue;
+        }
+        const cells = line.slice(1, -1).split('|').map(c => c.trim());
+        if (!inTable) {
+          inTable = true;
+          tableHeader = cells;
+          tableRows = [];
+        } else {
+          tableRows.push(cells);
+        }
+      } else {
+        if (inTable) {
+          outLines.push(buildHtmlTable(tableHeader, tableRows));
+          inTable = false;
+          tableHeader = [];
+          tableRows = [];
+        }
+        outLines.push(line);
+      }
+    }
+    if (inTable) {
+      outLines.push(buildHtmlTable(tableHeader, tableRows));
+    }
+
+    const formattedBlocks = outLines.map(line => {
+      if (line.startsWith('<div style="overflow-x:auto') || line.startsWith('<div style="margin:14px 0') || line.startsWith('<pre style=')) return line;
+
+      let l = esc(line);
+      if (/^###\s+((?:🌟\s*)?Quick\s*Quiz[\d\w–—\-:\s]*)/i.test(line)) {
+        const title = line.replace(/^###\s+/, '');
+        return `<div style="background:#f3e8ff; border-left:4px solid #9333ea; color:#581c87; padding:10px 14px; border-radius:6px; font-weight:600; margin:14px 0 8px; font-size:13px; display:flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(0,0,0,0.04);"><span>🧩</span> ${esc(title)}</div>`;
+      }
+      if (/^###\s+((?:Question:\s*)?Quick\s*Check[\d\w–—\-:\s]*)/i.test(line)) {
+        const title = line.replace(/^###\s+/, '');
+        return `<div style="background:#f0fdf4; border-left:4px solid #16a34a; color:#166534; padding:10px 14px; border-radius:6px; font-weight:600; margin:14px 0 8px; font-size:13px; display:flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(0,0,0,0.04);"><span>🎯</span> ${esc(title)}</div>`;
+      }
+      if (/^###\s+(Question\s*[\d\w–—\-:\s]*)/i.test(line)) {
+        const title = line.replace(/^###\s+/, '');
+        return `<div style="background:#eff6ff; border-left:4px solid #1a73e8; color:#1e40af; padding:8px 12px; border-radius:4px; font-weight:600; margin:14px 0 6px; font-size:13px; display:flex; align-items:center; gap:6px;"><span>📝</span> ${esc(title)}</div>`;
+      }
+      if (line.startsWith('### ')) {
+        return `<h3 style="color:#1a73e8; font-size:14px; margin:12px 0 6px; font-weight:600;">${esc(line.slice(4))}</h3>`;
+      }
+      if (line.startsWith('## ')) {
+        return `<h2 style="color:#1e293b; font-size:15px; margin:14px 0 8px; font-weight:700; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">${esc(line.slice(3))}</h2>`;
+      }
+      if (line.startsWith('# ')) {
+        return `<h1 style="color:#0f172a; font-size:16px; margin:16px 0 10px; font-weight:700;">${esc(line.slice(2))}</h1>`;
+      }
+      if (line === '---' || line === '***') {
+        return '<hr style="border:0; border-top:1px solid #cbd5e1; margin:14px 0;">';
+      }
+
+      const mcqMatch = /^([A-D])[\.\)]\s+(.*)/i.exec(line);
+      if (mcqMatch) {
+        const optLetter = mcqMatch[1].toUpperCase();
+        const optText = mcqMatch[2].trim();
+        const sendPayload = `Option ${optLetter}: ${optText}`;
+        const safePayload = esc(sendPayload).replace(/'/g, "\\'");
+        return `<button class="mcq-option-btn" onclick="sendQuick('${safePayload}')"><span class="mcq-badge">${esc(optLetter)}</span><span>${esc(optText)}</span></button>`;
+      }
+
+      l = l.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      l = l.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      return l;
+    });
+
+    return formattedBlocks.join('<br>');
+  }
+
+  function sendQuick(text) {
+    const qEl = document.getElementById('q');
+    qEl.value = text;
+    send();
+  }
+
+  function downloadExamPdf(btn) {
+    const msgBubble = btn.closest('.msg-bubble');
+    if (!msgBubble) return;
+
+    const clone = msgBubble.cloneNode(true);
+    clone.querySelectorAll('.quick-chips, .pdf-btn-wrap, button').forEach(el => el.remove());
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      alert('Please allow popups to download the PDF question paper.');
+      return;
+    }
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>CBSE Mathematics Practice Exam Paper</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.6; padding: 20px; background: #fff; }
+          .header { text-align: center; border-bottom: 2px solid #1a73e8; padding-bottom: 12px; margin-bottom: 20px; }
+          .header h1 { font-size: 20px; color: #1a73e8; margin: 0 0 4px 0; font-weight: 700; }
+          .header p { font-size: 12px; color: #475569; margin: 0; }
+          .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+          svg { max-width: 100%; height: auto; display: block; margin: 12px auto; }
+          @media print {
+            body { padding: 0; }
+            button { display: none !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🎓 AI Mathematics Teacher — CBSE Board Examination Paper</h1>
+          <p>Official CBSE Class 9 & 10 Mathematics Practice Question Paper</p>
+        </div>
+        <div class="content">
+          ${clone.innerHTML}
+        </div>
+        <div class="footer">
+          Generated by AI Mathematics Teacher · NCERT & CBSE Curriculum Standards
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+  function addMsg(role, text, meta) {
+    const msgs = document.getElementById('messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+
+    let contentHtml = role === 'ai' ? renderFormattedText(text) : esc(text);
+
+    const isSetupPrompt = text.includes('Mandatory Exam Preparation Settings') || text.includes('specify your exam preferences');
+
+    const isExamPaper = role === 'ai' && !isSetupPrompt && (
+      text.includes('Question Paper') ||
+      text.includes('Exam Paper Ready!') ||
+      (text.includes('Total Marks:') && (text.includes('[1 Mark]') || text.includes('[2 Marks]') || text.includes('[3 Marks]') || text.includes('[4 Marks]') || text.includes('[5 Marks]') || text.includes('[6 Marks]') || text.includes('[7 Marks]') || text.includes('CBSE Class')))
+    );
+
+
+    if (isExamPaper) {
+      contentHtml += `
+        <div class="pdf-btn-wrap" style="margin-top:12px;">
+          <button class="chip" style="background:#1a73e8; color:#fff; font-weight:600; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,0.12);" onclick="downloadExamPdf(this)">📥 Download Question Paper (PDF)</button>
+        </div>
+      `;
+    }
+
+    if (role === 'ai' && mode === 'INTERACTIVE' && !isExamPaper) {
+      contentHtml += `
+        <div class="quick-chips">
+          <button class="chip" onclick="sendQuick('Give me a quick quiz on this concept!')">🧩 Quick Quiz</button>
+          <button class="chip" onclick="sendQuick('Give me a hint for this question')">💡 Need a Hint</button>
+          <button class="chip" onclick="sendQuick('Show me the next step')">👉 Next Step</button>
+          <button class="chip" onclick="sendQuick('Show the full worked solution')">📝 Full Solution</button>
+        </div>
+      `;
+    }
+
+    wrap.innerHTML = `<div class="msg-bubble">${contentHtml}</div>` +
+      (meta ? `<div class="msg-meta">${esc(meta)}</div>` : '');
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    if (window.renderMathInElement) {
+      window.renderMathInElement(wrap, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '\\[', right: '\\]', display: true }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  let tc = 0;
+  function addThinking() {
+    const id = 'th' + (++tc);
+    const msgs = document.getElementById('messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ai';
+    wrap.id = id;
+    wrap.innerHTML = `<div class="thinking"><span></span><span></span><span></span></div>`;
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
+
+  function removeThinking(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  function setBusy(on) {
+    busy = on;
+    document.getElementById('send-btn').disabled = on;
+    document.getElementById('q').disabled = on;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>
