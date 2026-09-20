@@ -24,7 +24,7 @@
   'use strict';
 
   const DEFAULTS = {
-    api: window.MATH_TEACHER_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8000/api/v1' : location.origin + '/api/v1'),
+    api: window.MATH_TEACHER_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8000/api/v1' : 'https://rag-based-math-teacher.onrender.com/api/v1'),
     classLevel: null,
     position: 'bottom-right',
     title: 'AI Maths Teacher',

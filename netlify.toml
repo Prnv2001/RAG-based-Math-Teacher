@@ -9,6 +9,13 @@
   to = "/chat.html"
   status = 200
 
+# Proxy API requests directly to live Render backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://rag-based-math-teacher.onrender.com/api/:splat"
+  status = 200
+  force = true
+
 # CORS headers so embeddable widget chat-widget.js can be used anywhere
 [[headers]]
   for = "/*"
