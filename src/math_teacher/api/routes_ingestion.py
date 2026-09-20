@@ -6,8 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, statu
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from math_teacher.config.settings import settings
-from math_teacher.domain.errors import AdminAuthError, IngestionError
-from math_teacher.domain.models import ErrorResponse
+from math_teacher.domain.errors import IngestionError
 from math_teacher.embeddings.groq_provider import GroqEmbedder
 from math_teacher.ingestion.pipeline import ingest_pdf
 from math_teacher.storage.db import get_db

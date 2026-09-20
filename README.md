@@ -35,11 +35,8 @@ An intelligent, interactive, RAG-powered Mathematics Teacher web application and
 
 1. **Python 3.10 or higher**
 2. **PostgreSQL 15+** with the `pgvector` extension installed (`CREATE EXTENSION IF NOT EXISTS vector;`)
-3. **Ollama** running locally on port `11434` with the embedding model pulled:
-   ```bash
-   ollama pull nomic-embed-text
-   ```
-4. **Groq API Key** (Get a free API key at [console.groq.com](https://console.groq.com))
+3. **Groq API Key** (Get a free API key at [console.groq.com](https://console.groq.com))
+4. **Sentence-Transformers (PyTorch/CPU)** for embeddings (downloads `all-mpnet-base-v2` automatically on first run; no external background service required).
 
 ---
 
@@ -78,17 +75,16 @@ Edit `.env`:
 # Database
 DATABASE_URL=postgresql+asyncpg://postgres:your_password@localhost:5432/math_teacher
 
-# Groq LLM API
+# Groq Cloud LLM API
 GROQ_API_KEY=gsk_your_primary_groq_key_here
 GROQ_API_KEY_FALLBACK=gsk_your_fallback_groq_key_here
 GROQ_MODEL=openai/gpt-oss-20b
 
-# Ollama Embeddings
-OLLAMA_BASE_URL=http://localhost:11434
-EMBEDDING_MODEL=nomic-embed-text
+# Embeddings (Sentence-Transformers / Local CPU)
+EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
 EMBEDDING_DIMENSIONS=768
 
-# RAG Quality
+# RAG Quality & Thresholds
 GROUNDING_THRESHOLD=0.80
 MAX_AGENT_RETRIES=2
 
