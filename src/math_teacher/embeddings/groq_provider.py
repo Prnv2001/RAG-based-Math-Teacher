@@ -29,6 +29,11 @@ _MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 def _get_model():
     """Lazy-load the SentenceTransformer model (cached after first call)."""
     try:
+        import torch  # type: ignore
+        torch.set_num_threads(1)
+    except Exception:
+        pass
+    try:
         from sentence_transformers import SentenceTransformer  # type: ignore
     except ImportError as exc:
         raise ImportError(
