@@ -24,7 +24,7 @@
   'use strict';
 
   const DEFAULTS = {
-    api: 'http://localhost:8000/api/v1',
+    api: window.MATH_TEACHER_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8000/api/v1' : location.origin + '/api/v1'),
     classLevel: null,
     position: 'bottom-right',
     title: 'AI Maths Teacher',
@@ -44,6 +44,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
       z-index: 99998;
       display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
     #mt-widget-btn.right { right: 24px; }
     #mt-widget-btn.left  { left: 24px; }
@@ -101,6 +102,7 @@
       overflow-y: auto;
       padding: 12px;
       display: flex; flex-direction: column; gap: 10px;
+      -webkit-overflow-scrolling: touch;
     }
     .mt-msg { max-width: 85%; line-height: 1.5; }
     .mt-msg.user { align-self: flex-end; }
@@ -112,9 +114,10 @@
     .mt-meta { font-size: 10px; color: #999; margin-top: 3px; }
     .mt-chips { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
     .mt-chip {
-      padding: 3px 8px; background: #e2e8f0; border: 1px solid #cbd5e1;
-      border-radius: 10px; font-size: 10px; font-weight: 500; color: #1e293b;
+      padding: 4px 10px; background: #e2e8f0; border: 1px solid #cbd5e1;
+      border-radius: 10px; font-size: 11px; font-weight: 500; color: #1e293b;
       cursor: pointer; transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
     }
     .mt-chip:hover { background: #cbd5e1; color: #0f172a; }
     .mt-mcq-btn {
@@ -122,6 +125,7 @@
       padding: 6px 10px; margin: 3px 0; background: #fff; border: 1px solid #cbd5e1;
       border-radius: 5px; font-size: 12px; color: #0f172a; cursor: pointer;
       transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
     }
     .mt-mcq-btn:hover { background: #f3e8ff; border-color: #9333ea; color: #581c87; }
     .mt-mcq-badge {
@@ -140,6 +144,7 @@
     #mt-input-row {
       display: flex; gap: 6px; padding: 10px;
       border-top: 1px solid #eee; flex-shrink: 0;
+      background: #fff;
     }
     #mt-q {
       flex: 1; padding: 7px 9px;
@@ -157,11 +162,45 @@
     #mt-status {
       font-size: 10px; color: #888; padding: 0 12px 6px;
       display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+      background: #fafafa;
     }
     .mt-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
     .mt-dot.ok { background: #34a853; }
     .mt-dot.warn { background: #fbbc04; }
     .mt-dot.fail { background: #ea4335; }
+
+    /* Mobile Screen Responsive Overlay */
+    @media (max-width: 600px) {
+      #mt-widget-panel {
+        width: 100vw !important;
+        height: 100dvh !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        z-index: 999999 !important;
+      }
+      #mt-widget-btn {
+        bottom: 16px !important;
+        right: 16px !important;
+      }
+      #mt-widget-btn.left {
+        left: 16px !important;
+      }
+      .mt-msg {
+        max-width: 92% !important;
+      }
+      #mt-q {
+        font-size: 14px !important; /* Prevents iOS auto-zoom */
+      }
+      svg {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+    }
   `;
 
   function init(opts) {

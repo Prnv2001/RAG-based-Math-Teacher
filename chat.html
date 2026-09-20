@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>AI Maths Teacher — Dev Chat</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
@@ -183,6 +184,51 @@
     button.send:disabled { background: #ccc; cursor: not-allowed; }
 
     .empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 13px; }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        height: 100dvh;
+      }
+      .sidebar {
+        width: 100%;
+        padding: 8px 12px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .sidebar h2 { display: none; }
+      .sidebar > div { flex: 1; min-width: 80px; }
+      .mode-btns { flex-direction: row; flex-wrap: wrap; gap: 3px; }
+      .mode-btn {
+        font-size: 10px;
+        padding: 4px 6px;
+        text-align: center;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .status { margin-top: 0; margin-left: auto; }
+      .messages {
+        padding: 10px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .msg { max-width: 92%; }
+      .input-row { padding: 8px 10px; }
+      textarea { font-size: 14px; } /* Prevents iOS auto-zoom */
+      button.send { padding: 0 14px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+      svg { max-width: 100% !important; height: auto !important; }
+    }
+
+    @media (max-width: 480px) {
+      .sidebar > div { min-width: 70px; }
+      .mode-btn { font-size: 9.5px; padding: 3px 5px; }
+      .chip { font-size: 10.5px; padding: 5px 10px; }
+      .mcq-option-btn { padding: 8px 10px; font-size: 12.5px; }
+    }
   </style>
 </head>
 <body>
@@ -238,7 +284,7 @@
 </div>
 
 <script>
-  const API = 'http://localhost:8000/api/v1';
+  const API = window.MATH_TEACHER_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8000/api/v1' : location.origin + '/api/v1');
   let mode = 'INTERACTIVE';
   let busy = false;
   let chatHistory = [];

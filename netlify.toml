@@ -1,0 +1,18 @@
+# Netlify deployment configuration for AI Math Teacher Frontend
+
+[build]
+  publish = "."
+
+# Default root redirect to interactive chat interface
+[[redirects]]
+  from = "/"
+  to = "/chat.html"
+  status = 200
+
+# CORS headers so embeddable widget chat-widget.js can be used anywhere
+[[headers]]
+  for = "/*"
+    [headers.values]
+      Access-Control-Allow-Origin = "*"
+      Access-Control-Allow-Headers = "*"
+      Access-Control-Allow-Methods = "*"
