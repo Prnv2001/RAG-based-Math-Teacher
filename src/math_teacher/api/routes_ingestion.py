@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, status
+# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from math_teacher.config.settings import settings
