@@ -185,47 +185,87 @@
 
     .empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 13px; }
 
-    /* Mobile Responsive Overrides */
+    /* Mobile Header & Responsive Overrides */
+    .mobile-header {
+      display: none;
+      background: #1a73e8;
+      color: #fff;
+      padding: 10px 14px;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .mobile-header .brand { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .mobile-mode-badge {
+      font-size: 11px;
+      background: rgba(255,255,255,0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .mobile-toggle-btn {
+      background: rgba(255,255,255,0.25);
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     @media (max-width: 768px) {
       body {
         flex-direction: column;
         height: 100dvh;
       }
+      .mobile-header { display: flex; }
       .sidebar {
+        display: none;
         width: 100%;
-        padding: 8px 12px;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
+        padding: 12px;
+        background: #fff;
+        flex-direction: column;
+        gap: 10px;
         border-right: none;
         border-bottom: 1px solid #e0e0e0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
-      .sidebar h2 { display: none; }
-      .sidebar > div { flex: 1; min-width: 80px; }
-      .mode-btns { flex-direction: row; flex-wrap: wrap; gap: 3px; }
+      .sidebar.open { display: flex; }
+      .sidebar h2 { display: block; font-size: 13px; }
+      .sidebar > div { width: 100%; }
+      .mode-btns { flex-direction: row; flex-wrap: wrap; gap: 4px; }
       .mode-btn {
-        font-size: 10px;
-        padding: 4px 6px;
+        flex: 1;
+        font-size: 11px;
+        padding: 6px 8px;
         text-align: center;
         -webkit-tap-highlight-color: transparent;
       }
-      .status { margin-top: 0; margin-left: auto; }
+      .status { margin-top: 4px; margin-left: 0; }
       .messages {
         padding: 10px;
-        gap: 8px;
+        gap: 10px;
         -webkit-overflow-scrolling: touch;
       }
       .msg { max-width: 92%; }
-      .input-row { padding: 8px 10px; }
-      textarea { font-size: 14px; } /* Prevents iOS auto-zoom */
-      button.send { padding: 0 14px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+      .input-row { padding: 8px 10px; background: #fff; }
+      textarea { font-size: 14px; min-height: 40px; } /* Prevents iOS auto-zoom */
+      button.send { padding: 0 16px; font-size: 14px; font-weight: 600; -webkit-tap-highlight-color: transparent; }
       svg { max-width: 100% !important; height: auto !important; }
+      .quick-chips {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .chip { flex-shrink: 0; font-size: 11px; padding: 6px 12px; }
     }
 
     @media (max-width: 480px) {
-      .sidebar > div { min-width: 70px; }
-      .mode-btn { font-size: 9.5px; padding: 3px 5px; }
+      .mode-btn { font-size: 10px; padding: 5px 6px; }
       .chip { font-size: 10.5px; padding: 5px 10px; }
       .mcq-option-btn { padding: 8px 10px; font-size: 12.5px; }
     }
@@ -233,8 +273,14 @@
 </head>
 <body>
 
-<div class="sidebar">
-  <h2>Context</h2>
+<div class="mobile-header">
+  <div class="brand">🎓 <span>AI Maths Teacher</span></div>
+  <span id="mobile-mode-badge" class="mobile-mode-badge">Interactive</span>
+  <button id="mobile-toggle-btn" class="mobile-toggle-btn" onclick="toggleMobileSidebar()">⚙️ Settings</button>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <h2>Context & Settings</h2>
 
   <div>
     <label>Class</label>
@@ -260,7 +306,7 @@
   <div>
     <label>Mode</label>
     <div class="mode-btns">
-      <button class="mode-btn active" data-mode="INTERACTIVE" onclick="setMode(this)">🎓 Interactive Teacher</button>
+      <button class="mode-btn active" data-mode="INTERACTIVE" onclick="setMode(this)">🎓 Interactive</button>
       <button class="mode-btn" data-mode="GUIDED" onclick="setMode(this)">Guided</button>
       <button class="mode-btn" data-mode="HINT" onclick="setMode(this)">Hint</button>
       <button class="mode-btn" data-mode="FULL_SOLUTION" onclick="setMode(this)">Full Solution</button>
@@ -306,10 +352,23 @@
     }
   }
 
+  function toggleMobileSidebar() {
+    const sb = document.getElementById('sidebar');
+    const btn = document.getElementById('mobile-toggle-btn');
+    sb.classList.toggle('open');
+    btn.textContent = sb.classList.contains('open') ? '✕ Close' : '⚙️ Settings';
+  }
+
   function setMode(btn) {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     mode = btn.dataset.mode;
+    const badge = document.getElementById('mobile-mode-badge');
+    if (badge) badge.textContent = btn.textContent.replace('🎓', '').trim();
+    if (window.innerWidth <= 768) {
+      const sb = document.getElementById('sidebar');
+      if (sb.classList.contains('open')) toggleMobileSidebar();
+    }
   }
 
   function resize(el) {

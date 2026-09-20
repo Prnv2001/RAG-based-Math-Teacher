@@ -25,7 +25,16 @@ from math_teacher.storage.db import engine
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup/shutdown lifecycle."""
-    # Startup: verify DB connection
+    # Pre-warm SentenceTransformer embedding model on startup so queries run in 0.05s
+    try:
+        import asyncio
+        from math_teacher.embeddings.groq_provider import _get_model
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _get_model)
+        print("\n[STARTUP] SentenceTransformer embedding model pre-warmed & ready in RAM!", flush=True)
+    except Exception as exc:
+        print(f"\n[STARTUP WARNING] Embedder pre-warm failed: {exc}", flush=True)
+
     yield
     # Shutdown: close DB pool
     await engine.dispose()
