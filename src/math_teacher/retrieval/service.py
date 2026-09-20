@@ -610,63 +610,68 @@ async def retrieve(
     # Embed query
     query_embedding = await embedder.embed(query)
 
-    # Run vector and keyword search
-    vector_results = await vector_search(
-        query_embedding=query_embedding,
-        session=session,
-        class_level=query_context.class_level,
-        chapter=query_context.chapter,
-        top_k=top_k,
-    )
-
-    keyword_results = await keyword_search(
-        query=query,
-        session=session,
-        class_level=query_context.class_level,
-        chapter=query_context.chapter,
-        top_k=top_k,
-    )
-
-    # Merge with RRF
-    fused = reciprocal_rank_fusion(vector_results, keyword_results)
-
-    # Fallback: if chapter filter returned 0 results, retry without chapter filter
-    if not fused and query_context.chapter:
+    try:
+        # Run vector and keyword search
         vector_results = await vector_search(
             query_embedding=query_embedding,
             session=session,
             class_level=query_context.class_level,
-            chapter=None,
+            chapter=query_context.chapter,
             top_k=top_k,
         )
+
         keyword_results = await keyword_search(
             query=query,
             session=session,
             class_level=query_context.class_level,
-            chapter=None,
+            chapter=query_context.chapter,
             top_k=top_k,
         )
+
+        # Merge with RRF
         fused = reciprocal_rank_fusion(vector_results, keyword_results)
 
-    # Fallback: if still 0 results (e.g. class_level filter too strict), search whole DB
-    if not fused and query_context.class_level:
-        vector_results = await vector_search(
-            query_embedding=query_embedding,
-            session=session,
-            class_level=None,
-            chapter=None,
-            top_k=top_k,
-        )
-        keyword_results = await keyword_search(
-            query=query,
-            session=session,
-            class_level=None,
-            chapter=None,
-            top_k=top_k,
-        )
-        fused = reciprocal_rank_fusion(vector_results, keyword_results)
+        # Fallback: if chapter filter returned 0 results, retry without chapter filter
+        if not fused and query_context.chapter:
+            vector_results = await vector_search(
+                query_embedding=query_embedding,
+                session=session,
+                class_level=query_context.class_level,
+                chapter=None,
+                top_k=top_k,
+            )
+            keyword_results = await keyword_search(
+                query=query,
+                session=session,
+                class_level=query_context.class_level,
+                chapter=None,
+                top_k=top_k,
+            )
+            fused = reciprocal_rank_fusion(vector_results, keyword_results)
 
-    # Rerank
-    final = rerank(query=query, chunks=fused, top_k=rerank_top_k)
+        # Fallback: if still 0 results (e.g. class_level filter too strict), search whole DB
+        if not fused and query_context.class_level:
+            vector_results = await vector_search(
+                query_embedding=query_embedding,
+                session=session,
+                class_level=None,
+                chapter=None,
+                top_k=top_k,
+            )
+            keyword_results = await keyword_search(
+                query=query,
+                session=session,
+                class_level=None,
+                chapter=None,
+                top_k=top_k,
+            )
+            fused = reciprocal_rank_fusion(vector_results, keyword_results)
 
-    return final
+        # Rerank
+        final = rerank(query=query, chunks=fused, top_k=rerank_top_k)
+        return final
+    except Exception as exc:
+        import logging
+        logging.getLogger("math_teacher.retrieval").warning(f"Database retrieval unavailable ({exc}). Continuing with LLM knowledge base.")
+        return []
+
