@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from math_teacher.config.settings import settings
 from math_teacher.domain.errors import AdminAuthError, IngestionError
 from math_teacher.domain.models import ErrorResponse
-from math_teacher.embeddings.provider import OllamaEmbedder
+from math_teacher.embeddings.groq_provider import GroqEmbedder
 from math_teacher.ingestion.pipeline import ingest_pdf
 from math_teacher.storage.db import get_db
 
@@ -63,7 +63,7 @@ async def ingest_textbook(
         tmp_path = Path(tmp.name)
 
     try:
-        embedder = OllamaEmbedder()
+        embedder = GroqEmbedder()
         result = await ingest_pdf(
             pdf_path=tmp_path,
             title=title,

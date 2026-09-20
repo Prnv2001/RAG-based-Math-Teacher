@@ -37,7 +37,7 @@ def create_app() -> FastAPI:
         title="AI Maths Teacher",
         description=(
             "Curriculum-grounded RAG backend for Class 9–10 Mathematics. "
-            "Powered by DeepSeek-R1 via Ollama + pgvector hybrid retrieval."
+            "Powered by Groq Cloud API + pgvector hybrid retrieval."
         ),
         version="1.0.0",
         docs_url="/docs",
