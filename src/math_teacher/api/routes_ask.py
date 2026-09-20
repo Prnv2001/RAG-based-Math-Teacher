@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from math_teacher.agents.state import AgentState
-from math_teacher.domain.enums import GuardAction, Intent
-from math_teacher.domain.models import AskRequest, AskResponse, ErrorResponse
+from math_teacher.domain.enums import Intent
+from math_teacher.domain.models import AskRequest, AskResponse
 from math_teacher.embeddings.groq_provider import GroqEmbedder   # swap: was OllamaEmbedder
 from math_teacher.llm.groq_provider import GroqLLM               # swap: was OllamaLLM
 from math_teacher.orchestration.graph import build_graph
